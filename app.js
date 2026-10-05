@@ -3,8 +3,8 @@
    2) Run schema.sql in Supabase SQL Editor.
    3) Replace SUPABASE_URL and SUPABASE_ANON_KEY below.
 */
-const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+const SUPABASE_URL = "https://eejexypuzxlhgyhkqyeu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_jkaUkbf1HTVS5q46LJVbrQ_Nt6PWojL";
 
 const canvas=document.getElementById("wheel"),ctx=canvas.getContext("2d");
 const nameInput=document.getElementById("name"),spinBtn=document.getElementById("spin");
