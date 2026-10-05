@@ -1,10 +1,6 @@
 /* =========================================================
    SPARTAN 💎 LUCKY WHEEL
-   Supabase-powered shared wheel
    ========================================================= */
-
-
-/* ---------------- SUPABASE ---------------- */
 
 const SUPABASE_URL =
   "https://eejexypuzxlhgyhkqyeu.supabase.co";
@@ -13,25 +9,25 @@ const SUPABASE_ANON_KEY =
   "sb_publishable_jkaUkbf1HTVS5q46LJVbrQ_Nt6PWojL";
 
 
-/* ---------------- ELEMENTS ---------------- */
+/* =========================
+   ELEMENTS
+   ========================= */
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 
 const nameInput = document.getElementById("name");
-
 const spinBtn = document.getElementById("spin");
-
 const resetBtn = document.getElementById("resetBtn");
 
 const message = document.getElementById("message");
-
 const historyEl = document.getElementById("history");
-
 const countEl = document.getElementById("count");
 
 
-/* ---------------- STATE ---------------- */
+/* =========================
+   VARIABLES
+   ========================= */
 
 let history = [];
 
@@ -40,11 +36,12 @@ let available = [
 ];
 
 let angle = 0;
-
 let spinning = false;
 
 
-/* ---------------- COLORS ---------------- */
+/* =========================
+   COLORS
+   ========================= */
 
 const colors = [
   "#ff4d6d",
@@ -59,63 +56,84 @@ const colors = [
 ];
 
 
-/* =========================================================
-   SUPABASE REQUEST HELPER
-   ========================================================= */
+/* =========================
+   SUPABASE API
+   ========================= */
 
-async function api(path, options = {}) {
-
-  const response = await fetch(
-    SUPABASE_URL + "/rest/v1/" + path,
-    {
-      ...options,
-
-      headers: {
-        "apikey": SUPABASE_ANON_KEY,
-
-        "Authorization":
-          "Bearer " + SUPABASE_ANON_KEY,
-
-        "Content-Type":
-          "application/json",
-
-        "Prefer":
-          "return=representation",
-
-        ...(options.headers || {})
-      }
-    }
-  );
-
-
-  if (!response.ok) {
-
-    const errorText =
-      await response.text();
-
-    throw new Error(errorText);
-  }
-
-
-  if (response.status === 204) {
-    return [];
-  }
-
-
-  return response.json();
-}
-
-
-/* =========================================================
-   LOAD SHARED HISTORY
-   ========================================================= */
-
-async function load() {
+async function supabaseRequest(endpoint, options = {}) {
 
   try {
 
-    history = await api(
-      "spins?select=display_name,number,created_at&order=created_at.asc"
+    const response = await fetch(
+      SUPABASE_URL + endpoint,
+      {
+        method: options.method || "GET",
+
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization":
+            "Bearer " + SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          ...(options.headers || {})
+        },
+
+        body: options.body || undefined
+      }
+    );
+
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+
+
+    if (!response.ok) {
+
+      console.error(
+        "Supabase error:",
+        response.status,
+        data
+      );
+
+      throw new Error(
+        typeof data === "string"
+          ? data
+          : JSON.stringify(data)
+      );
+    }
+
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "Request failed:",
+      error
+    );
+
+    throw error;
+  }
+}
+
+
+/* =========================
+   LOAD SHARED HISTORY
+   ========================= */
+
+async function loadHistory() {
+
+  try {
+
+    history = await supabaseRequest(
+      "/rest/v1/spins?select=display_name,number,created_at&order=created_at.asc"
     );
 
 
@@ -134,12 +152,12 @@ async function load() {
     );
 
 
-    draw();
+    drawWheel();
 
     renderHistory();
 
 
-    if (history.length === 10) {
+    if (history.length >= 9) {
 
       message.textContent =
         "🏆 All numbers have been claimed!";
@@ -151,19 +169,21 @@ async function load() {
 
     }
 
+
   } catch (error) {
 
     console.error(error);
 
     message.textContent =
       "⚠️ Could not load shared history.";
+
   }
 }
 
 
-/* =========================================================
-   RENDER HISTORY
-   ========================================================= */
+/* =========================
+   HISTORY DISPLAY
+   ========================= */
 
 function renderHistory() {
 
@@ -185,16 +205,27 @@ function renderHistory() {
       row.className = "row";
 
 
-      row.innerHTML = `
-        <span class="name">
-          ${escapeHtml(item.display_name)}
-        </span>
+      const name =
+        document.createElement("span");
 
-        <span class="num">
-          #${Number(item.number)}
-        </span>
-      `;
+      name.className = "name";
 
+      name.textContent =
+        item.display_name;
+
+
+      const number =
+        document.createElement("span");
+
+      number.className = "num";
+
+      number.textContent =
+        "#" + Number(item.number);
+
+
+      row.appendChild(name);
+
+      row.appendChild(number);
 
       historyEl.appendChild(row);
 
@@ -208,31 +239,11 @@ function renderHistory() {
 }
 
 
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function escapeHtml(value) {
-
-  return String(value).replace(
-    /[&<>"']/g,
-
-    character => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[character])
-  );
-}
-
-
-/* =========================================================
+/* =========================
    DRAW WHEEL
-   ========================================================= */
+   ========================= */
 
-function draw() {
+function drawWheel() {
 
   const size = 700;
 
@@ -245,7 +256,6 @@ function draw() {
 
   canvas.height =
     size * dpr;
-
 
   canvas.style.width =
     "100%";
@@ -265,9 +275,7 @@ function draw() {
 
 
   const centerX = 350;
-
   const centerY = 350;
-
   const radius = 310;
 
 
@@ -277,10 +285,8 @@ function draw() {
       : [2,3,4,5,6,7,8,9,10];
 
 
-  const n = numbers.length;
-
-  const step =
-    (Math.PI * 2) / n;
+  const slice =
+    (Math.PI * 2) / numbers.length;
 
 
   ctx.clearRect(
@@ -293,98 +299,91 @@ function draw() {
 
   ctx.save();
 
-
   ctx.translate(
     centerX,
     centerY
   );
 
-
   ctx.rotate(angle);
 
 
-  for (
-    let i = 0;
-    i < n;
-    i++
-  ) {
+  numbers.forEach(
+    (number, index) => {
 
-    const start =
-      i * step;
+      const start =
+        index * slice;
 
-    const end =
-      start + step;
+      const end =
+        start + slice;
 
 
-    /* Slice */
+      ctx.beginPath();
 
-    ctx.beginPath();
+      ctx.moveTo(
+        0,
+        0
+      );
 
-    ctx.moveTo(
-      0,
-      0
-    );
+      ctx.arc(
+        0,
+        0,
+        radius,
+        start,
+        end
+      );
 
-    ctx.arc(
-      0,
-      0,
-      radius,
-      start,
-      end
-    );
-
-    ctx.closePath();
+      ctx.closePath();
 
 
-    ctx.fillStyle =
-      colors[i % colors.length];
+      ctx.fillStyle =
+        colors[index % colors.length];
 
-    ctx.fill();
-
-
-    ctx.strokeStyle =
-      "#ffffff";
-
-    ctx.lineWidth =
-      5;
-
-    ctx.stroke();
+      ctx.fill();
 
 
-    /* Number */
+      ctx.strokeStyle =
+        "#ffffff";
 
-    ctx.save();
+      ctx.lineWidth =
+        5;
 
-    ctx.rotate(
-      start + step / 2
-    );
-
-
-    ctx.fillStyle =
-      "#111111";
-
-    ctx.font =
-      "900 42px system-ui";
-
-    ctx.textAlign =
-      "center";
-
-    ctx.textBaseline =
-      "middle";
+      ctx.stroke();
 
 
-    ctx.fillText(
-      numbers[i],
-      radius * 0.68,
-      0
-    );
+      ctx.save();
+
+      ctx.rotate(
+        start + slice / 2
+      );
 
 
-    ctx.restore();
-  }
+      ctx.fillStyle =
+        "#111111";
+
+      ctx.font =
+        "900 42px system-ui";
+
+      ctx.textAlign =
+        "center";
+
+      ctx.textBaseline =
+        "middle";
 
 
-  /* Center */
+      ctx.fillText(
+        number,
+        radius * 0.68,
+        0
+      );
+
+
+      ctx.restore();
+
+    }
+  );
+
+
+  /* CENTER */
 
   ctx.beginPath();
 
@@ -395,7 +394,6 @@ function draw() {
     0,
     Math.PI * 2
   );
-
 
   ctx.fillStyle =
     "#ffffff";
@@ -421,7 +419,6 @@ function draw() {
   ctx.fillStyle =
     "#111111";
 
-
   ctx.fillText(
     "💎",
     0,
@@ -433,15 +430,14 @@ function draw() {
 }
 
 
-/* =========================================================
+/* =========================
    SPIN
-   ========================================================= */
+   ========================= */
 
-async function spin() {
+async function spinWheel() {
 
-  if (spinning) {
+  if (spinning)
     return;
-  }
 
 
   const name =
@@ -462,7 +458,7 @@ async function spin() {
   if (available.length === 0) {
 
     message.textContent =
-      "🏆 All numbers have been claimed!";
+      "🏆 All numbers have been claimed.";
 
     return;
   }
@@ -472,27 +468,25 @@ async function spin() {
 
   spinBtn.disabled = true;
 
+  resetBtn.disabled = true;
+
   message.textContent =
     "🎡 Spinning...";
 
 
   try {
 
-    /*
-      Supabase randomly chooses
-      and permanently reserves the number.
-    */
+    /* Ask Supabase for a random unused number */
 
     const result =
-      await api(
-        "rpc/spin_wheel",
+      await supabaseRequest(
+        "/rest/v1/rpc/spin_wheel",
         {
           method: "POST",
 
-          body:
-            JSON.stringify({
-              p_name: name
-            })
+          body: JSON.stringify({
+            p_name: name
+          })
         }
       );
 
@@ -505,53 +499,46 @@ async function spin() {
       available.indexOf(winner);
 
 
-    const n =
+    if (index === -1) {
+
+      throw new Error(
+        "Winning number was not available on the wheel."
+      );
+
+    }
+
+
+    const slice =
+      (Math.PI * 2) /
       available.length;
 
 
-    const step =
-      (Math.PI * 2) / n;
-
-
     const current =
-      (
-        angle %
-        (Math.PI * 2)
-      + Math.PI * 2
-      ) %
-      (Math.PI * 2);
+      ((angle % (Math.PI * 2))
+        + Math.PI * 2)
+      % (Math.PI * 2);
 
-
-    /*
-      The pointer is at the TOP.
-
-      TOP = -PI / 2
-
-      Rotate the center of the
-      winning slice to the pointer.
-    */
 
     const winningCenter =
-      index * step +
-      step / 2;
+      index * slice +
+      slice / 2;
 
 
     let delta =
-      (-Math.PI / 2) -
-      winningCenter -
-      current;
+      (-Math.PI / 2)
+      - winningCenter
+      - current;
 
 
     while (delta < 0) {
 
       delta +=
         Math.PI * 2;
+
     }
 
 
-    /*
-      Extra rotations.
-    */
+    /* Several full rotations */
 
     delta +=
       Math.PI * 2 * 6;
@@ -559,7 +546,6 @@ async function spin() {
 
     const startAngle =
       angle;
-
 
     const endAngle =
       angle + delta;
@@ -586,6 +572,8 @@ async function spin() {
             );
 
 
+          /* Smooth slowdown */
+
           const easing =
             1 -
             Math.pow(
@@ -596,17 +584,14 @@ async function spin() {
 
           angle =
             startAngle +
-            (endAngle -
-             startAngle) *
-            easing;
+            (endAngle - startAngle)
+            * easing;
 
 
-          draw();
+          drawWheel();
 
 
-          if (
-            progress < 1
-          ) {
+          if (progress < 1) {
 
             requestAnimationFrame(
               animate
@@ -615,13 +600,16 @@ async function spin() {
           } else {
 
             resolve();
+
           }
+
         }
 
 
         requestAnimationFrame(
           animate
         );
+
       }
     );
 
@@ -630,32 +618,33 @@ async function spin() {
       endAngle;
 
 
-    draw();
+    drawWheel();
 
 
     message.textContent =
       `🏆 ${name} won Number ${winner}!`;
 
 
-    /*
-      Reload shared history.
-    */
+    /* Refresh shared results */
 
-    await load();
+    await loadHistory();
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "SPIN ERROR:",
+      error
+    );
 
 
-    const text =
+    const errorText =
       String(error).toLowerCase();
 
 
     if (
-      text.includes("already") ||
-      text.includes("participant")
+      errorText.includes("already") ||
+      errorText.includes("participant")
     ) {
 
       message.textContent =
@@ -665,6 +654,7 @@ async function spin() {
 
       message.textContent =
         "❌ Spin failed. Please try again.";
+
     }
 
   } finally {
@@ -672,55 +662,77 @@ async function spin() {
     spinning = false;
 
     spinBtn.disabled = false;
+
+    resetBtn.disabled = false;
+
   }
 }
 
 
-/* =========================================================
+/* =========================
    RESET WHEEL
-   ========================================================= */
+   ========================= */
 
 async function resetWheel() {
 
+  console.log(
+    "RESET BUTTON CLICKED"
+  );
+
+
   if (spinning) {
+
+    alert(
+      "Please wait until the wheel stops spinning."
+    );
+
     return;
   }
 
 
+  /* PASSWORD BOX */
+
   const password =
-    prompt(
+    window.prompt(
       "🔐 Enter the administrator password:"
     );
 
 
   if (password === null) {
+
     return;
+
   }
 
 
-  if (!password) {
+  if (
+    password.trim() !== "SPARTAN"
+  ) {
 
     alert(
-      "Please enter a password."
+      "❌ Incorrect password."
     );
 
     return;
   }
 
 
+  /* CONFIRMATION */
+
   const confirmed =
-    confirm(
+    window.confirm(
       "⚠️ This will erase EVERY previous spin.\n\n" +
       "Are you sure you want to reset the wheel?"
     );
 
 
-  if (!confirmed) {
+  if (!confirmed)
     return;
-  }
 
 
-  resetBtn.disabled = true;
+  resetBtn.disabled =
+    true;
+
 
   resetBtn.textContent =
     "🔄 RESETTING...";
@@ -728,32 +740,35 @@ async function resetWheel() {
 
   try {
 
-    await api(
-      "rpc/reset_wheel",
+    console.log(
+      "Sending reset request..."
+    );
+
+
+    await supabaseRequest(
+      "/rest/v1/rpc/reset_wheel",
       {
         method: "POST",
 
-        body:
-          JSON.stringify({
-            p_password:
-              password
-          })
+        body: JSON.stringify({
+          p_password: "SPARTAN"
+        })
       }
     );
 
 
-    history = [];
+    /* Clear local data */
 
+    history = [];
 
     available = [
       2,3,4,5,6,7,8,9,10
     ];
 
-
     angle = 0;
 
 
-    draw();
+    drawWheel();
 
     renderHistory();
 
@@ -769,31 +784,37 @@ async function resetWheel() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "RESET ERROR:",
+      error
+    );
 
 
     alert(
       "❌ Reset failed.\n\n" +
-      "Make sure the password is correct."
+      "Check that the Supabase reset function was created correctly."
     );
+
 
   } finally {
 
-    resetBtn.disabled = false;
+    resetBtn.disabled =
+      false;
 
     resetBtn.textContent =
       "🔐 RESET WHEEL";
+
   }
 }
 
 
-/* =========================================================
-   EVENTS
-   ========================================================= */
+/* =========================
+   BUTTONS
+   ========================= */
 
 spinBtn.addEventListener(
   "click",
-  spin
+  spinWheel
 );
 
 
@@ -803,16 +824,44 @@ resetBtn.addEventListener(
 );
 
 
-window.addEventListener(
-  "resize",
-  draw
+/* =========================
+   ENTER KEY
+   ========================= */
+
+nameInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      spinWheel();
+
+    }
+
+  }
 );
 
 
-/* =========================================================
+/* =========================
+   RESIZE
+   ========================= */
+
+window.addEventListener(
+  "resize",
+  drawWheel
+);
+
+
+/* =========================
    START
-   ========================================================= */
+   ========================= */
 
-draw();
+drawWheel();
 
-load();
+loadHistory();
+
+console.log(
+  "🎡 SPARTAN 💎 Lucky Wheel loaded successfully."
+);
