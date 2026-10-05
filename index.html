@@ -1,43 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SPARTAN 💎 Lucky Wheel</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SPARTAN 💎 Lucky Wheel</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<main>
-  <header>
-    <h1>🎡 SPARTAN 💎 LUCKY WHEEL</h1>
-    <p>One spin per person • Numbers 2–10 are luck-based • Number 1 is reserved for SPARTAN 💎</p>
-  </header>
 
-  <section class="card">
-    <div id="setupNotice" class="notice">
-      <b>Before going live:</b> open <code>app.js</code> and add your Supabase URL and anon key.
-    </div>
+  <main class="container">
 
-    <label for="name">WhatsApp display name</label>
-    <input id="name" maxlength="40" autocomplete="nickname" placeholder="e.g. Davina">
+    <header class="hero">
+      <h1>🎡 SPARTAN 💎</h1>
+      <h2>LUCKY WHEEL</h2>
 
-    <div class="wheelBox">
-      <div class="pointer">▼</div>
-      <canvas id="wheel" width="700" height="700"></canvas>
-    </div>
+      <p>
+        One spin per person • Numbers 2–10 are luck-based
+      </p>
 
-    <button id="spin">🎲 SPIN ONCE</button>
-    <p id="message" class="message" aria-live="polite">Enter your name and spin.</p>
-  </section>
+      <p>
+        <strong>Number 1 is reserved for SPARTAN 💎</strong>
+      </p>
+    </header>
 
-  <section class="card">
-    <div class="historyHead">
-      <h2>📜 Previous History</h2>
-      <span id="count">0/10</span>
-    </div>
-    <div id="history" class="history"></div>
-  </section>
-</main>
-<script src="app.js"></script>
+
+    <section class="card">
+
+      <label for="name">
+        WhatsApp Display Name
+      </label>
+
+      <input
+        id="name"
+        type="text"
+        maxlength="40"
+        placeholder="Enter your WhatsApp name"
+        autocomplete="off"
+      >
+
+
+      <div class="wheel-wrapper">
+
+        <!-- Pointer -->
+        <div class="pointer">▼</div>
+
+        <canvas
+          id="wheel"
+          width="700"
+          height="700"
+        ></canvas>
+
+      </div>
+
+
+      <button
+        id="spin"
+        class="spin-btn"
+        type="button"
+      >
+        🎯 SPIN ONCE
+      </button>
+
+
+      <div
+        id="message"
+        class="message"
+        aria-live="polite"
+      >
+        Enter your name and spin.
+      </div>
+
+
+      <div class="admin-section">
+
+        <button
+          id="resetBtn"
+          class="reset-btn"
+          type="button"
+        >
+          🔐 RESET WHEEL
+        </button>
+
+        <p class="admin-note">
+          Reset requires the administrator password.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <section class="card history-card">
+
+      <div class="history-header">
+
+        <h2>🏆 Shared History</h2>
+
+        <span id="count">
+          0/10
+        </span>
+
+      </div>
+
+
+      <div id="history">
+
+        <div class="empty">
+          No spins yet. You could be first!
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <footer>
+      <p>
+        SPARTAN 💎 Lucky Wheel
+      </p>
+
+      <p>
+        One number per participant • Fair random selection
+      </p>
+    </footer>
+
+  </main>
+
+
+  <script src="app.js"></script>
+
 </body>
 </html>
