@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPARTAN 💎 Lucky Wheel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>🎡 SPARTAN 💎 LUCKY WHEEL</h1>
+    <p>One spin per person • Numbers 2–10 are luck-based • Number 1 is reserved for SPARTAN 💎</p>
+  </header>
+
+  <section class="card">
+    <div id="setupNotice" class="notice">
+      <b>Before going live:</b> open <code>app.js</code> and add your Supabase URL and anon key.
+    </div>
+
+    <label for="name">WhatsApp display name</label>
+    <input id="name" maxlength="40" autocomplete="nickname" placeholder="e.g. Davina">
+
+    <div class="wheelBox">
+      <div class="pointer">▼</div>
+      <canvas id="wheel" width="700" height="700"></canvas>
+    </div>
+
+    <button id="spin">🎲 SPIN ONCE</button>
+    <p id="message" class="message" aria-live="polite">Enter your name and spin.</p>
+  </section>
+
+  <section class="card">
+    <div class="historyHead">
+      <h2>📜 Previous History</h2>
+      <span id="count">0/10</span>
+    </div>
+    <div id="history" class="history"></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
